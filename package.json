@@ -1,0 +1,21 @@
+{
+  "name": "user-service",
+  "version": "1.0.0",
+  "description": "nodejs practice project which will use most of the tools",
+  "main": "./build/index.js",
+  "scripts": {
+    "dev:start": "nodemon ./src/server.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "NiketanSaini",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^20.14.9",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/debug": "^4.1.12",
+    "nodemon": "^3.1.4",
+    "ts-node": "^10.9.2"
+  }
+}
