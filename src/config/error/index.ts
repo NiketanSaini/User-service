@@ -1,32 +1,33 @@
-import * as http from 'http';
+import { Request, Response, NextFunction } from 'express';
 
 /**
- * @export
- * @class HttpError
- * @extends {Error}
+ * Error handler middleware to handle server-side errors.
+ * Logs the error to the console and responds with a 500 Internal Server Error status.
+ * 
+ * @param {any} err - The error object
+ * @param {Request} req - The request object
+ * @param {Response} res - The response object
+ * @param {NextFunction} next - The next middleware function
  */
-export class HttpError extends Error {
-    status: number;
+export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error(err);
+  res.status(500).json({ message: "Internal Server Error" });
+};
 
-    message: string;
-
-    name: 'HttpError';
-
-    /**
-     * Creates an instance of HttpError.
-     * @param {number} [status]
-     * @param {string} [message]
-     * @memberof HttpError
-     */
-    constructor(status ? : number, message ? : string) {
-        super(message);
-
-        Error.captureStackTrace(this, this.constructor);
-
-        this.status = status || 500;
-        this.name = this.name || 'HttpError';
-        this.message = message || http.STATUS_CODES[this.status] || 'Error';
-    }
-}
-
-export default HttpError;
+/**
+ * Client error handler middleware to handle client-side errors.
+ * If the error object has a `status` property, responds with that status and the error message.
+ * Otherwise, passes the error to the next middleware function.
+ * 
+ * @param {any} err - The error object
+ * @param {Request} req - The request object
+ * @param {Response} res - The response object
+ * @param {NextFunction} next - The next middleware function
+ */
+export const clientErrorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
+  if (err.hasOwnProperty('status')) {
+    res.status(err.status).json({ message: err.message });
+  } else {
+    next(err);
+  }
+};

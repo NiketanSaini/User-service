@@ -1,48 +1,55 @@
 import compression from 'compression';
 import express from 'express';
-import { HttpError } from '../error/index';
-import { sendHttpErrorModule } from '../error/sendHttpError';
+import { clientErrorHandler, errorHandler } from '../error/index';
 
 /**
+ * Configures the express application with necessary middleware.
+ * 
  * @export
- * @param {express.Application} app
+ * @param {express.Application} app - The express application instance
  */
 export function configure(app: express.Application): void {
-    // returns the compression middleware
+    // Middleware to handle 404 Not Found errors
+    app.use(notFoundMiddleware);
+
+    // Custom logger middleware to log HTTP requests
+    app.use(loggerMiddleware);
+
+    // Compression middleware to gzip response bodies for all requests
     app.use(compression());
-    // custom errors
-    app.use(sendHttpErrorModule);
-    // cors
+
+    // Middleware to handle client-side errors
+    app.use(clientErrorHandler);
+
+    // Middleware to handle server-side errors
+    app.use(errorHandler);
+
+    // Middleware to handle CORS (Cross-Origin Resource Sharing)
     app.use((req, res, next) => {
         next();
     });
 }
 
-interface CustomResponse extends express.Response {
-    sendHttpError: (error: HttpError | Error, message?: string) => void;
-}
+/**
+ * Logger middleware to log the HTTP method and path of each request.
+ * 
+ * @param {express.Request} req - The request object
+ * @param {express.Response} res - The response object
+ * @param {express.NextFunction} next - The next middleware function
+ */
+const loggerMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.log(`${req.method} ${req.path}`);
+    next();
+};
 
 /**
- * @export
- * @param {express.Application}` app
+ * Middleware to handle 404 Not Found errors.
+ * Responds with a JSON message when no route matches the request.
+ * 
+ * @param {express.Request} req - The request object
+ * @param {express.Response} res - The response object
+ * @param {express.NextFunction} next - The next middleware function
  */
-export function initErrorHandler(app: express.Application): void {
-    app.use((error: Error, _req: express.Request, res: CustomResponse, next: express.NextFunction) => {
-        if (typeof error === 'number') {
-            error = new HttpError(error); // next(404)
-        }
-
-        if (error instanceof HttpError) {
-            res.sendHttpError(error);
-        } else if (app.get('env') === 'development') {
-            error = new HttpError(500, error.message);
-            res.sendHttpError(error);
-        } else {
-            error = new HttpError(500);
-            res.sendHttpError(error, error.message);
-        }
-
-        console.error(error);
-        next();
-    });
-}
+const notFoundMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    res.status(404).json({ message: "Not Found" });
+};
